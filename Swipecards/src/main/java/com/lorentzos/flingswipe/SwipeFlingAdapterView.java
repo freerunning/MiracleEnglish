@@ -7,6 +7,7 @@ import android.database.DataSetObserver;
 import android.graphics.PointF;
 import android.os.Build;
 import android.util.AttributeSet;
+import android.util.Log;
 import android.view.Gravity;
 import android.view.View;
 import android.widget.Adapter;
