@@ -1,11 +1,9 @@
 package com.dingyu.miracleenglish.adapter;
 
 import android.content.Context;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Adapter;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
@@ -29,6 +27,7 @@ public class ItemAdapter extends BaseAdapter {
 
     private int model = MODEL_DOUBLE;
     private List<Item> items = new ArrayList<Item>();
+    private int total;
     private Context context;
     private LayoutInflater inflater;
 
@@ -46,8 +45,10 @@ public class ItemAdapter extends BaseAdapter {
         updateView(0, view);
     }
 
-    public void addItem(Item item){
-        this.items.add(item);
+
+    public void setItems(List<Item> items){
+        this.items.addAll(items);
+        total = items.size();
         notifyDataSetChanged();
     }
 
@@ -77,6 +78,7 @@ public class ItemAdapter extends BaseAdapter {
         if(convertView == null){
             holder = new ViewHolder();
             convertView = this.inflater.inflate(R.layout.item, parent, false);
+            holder.itemId = (TextView)convertView.findViewById(R.id.item_id);
             holder.textView = (TextView) convertView.findViewById(R.id.text_view);
             convertView.setTag(holder);
         }
@@ -84,7 +86,6 @@ public class ItemAdapter extends BaseAdapter {
         holder = (ViewHolder) convertView.getTag();
 
         Item item = getItem(position);
-        Log.d(TAG, "positon="+position);
         setView(holder, item);
 
         return convertView;
@@ -93,22 +94,18 @@ public class ItemAdapter extends BaseAdapter {
     public void updateView(int position, AdapterView view){
         int first = view.getFirstVisiblePosition();
         int last = view.getLastVisiblePosition();
-        Log.d(TAG, "first="+first+",last="+last);
 
         if(position - first >= 0 && last - position >= 0){
             View updateView = view.getChildAt(position - first);
-            Log.d(TAG, "updateView"+updateView);
             if(updateView != null){
                 ViewHolder holder = (ViewHolder)updateView.getTag();
                 Item item = getItem(position);
                 setView(holder, item);
-                view.invalidate();
             }
         }
     }
 
     private void setView(ViewHolder holder, Item item){
-        Log.d(TAG, "holder"+holder+",item="+item.getDouble());
         if(model == MODEL_CHINESE){
             holder.textView.setText(item.getChinese());
         }else if(model == MODEL_ENGLISH){
@@ -116,10 +113,11 @@ public class ItemAdapter extends BaseAdapter {
         }else {
             holder.textView.setText(item.getDouble());
         }
-        holder.textView.invalidate();
+        holder.itemId.setText(item.getId()+"/"+total);
     }
 
     public static class ViewHolder{
+        TextView itemId;
         TextView textView;
     }
 }

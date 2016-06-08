@@ -9,7 +9,10 @@ import android.widget.Button;
 import com.dingyu.miracleenglish.R;
 import com.dingyu.miracleenglish.adapter.ItemAdapter;
 import com.dingyu.miracleenglish.data.Item;
+import com.dingyu.miracleenglish.parse.ParseSrt;
 import com.lorentzos.flingswipe.SwipeFlingAdapterView;
+
+import java.util.List;
 
 import static com.dingyu.miracleenglish.adapter.ItemAdapter.MODEL_CHINESE;
 import static com.dingyu.miracleenglish.adapter.ItemAdapter.MODEL_DOUBLE;
@@ -18,6 +21,8 @@ import static com.dingyu.miracleenglish.adapter.ItemAdapter.MODEL_ENGLISH;
 
 public class MainActivity extends Activity implements SwipeFlingAdapterView.onFlingListener, SwipeFlingAdapterView.OnItemClickListener, View.OnClickListener {
     private static final String TAG = "MainActivity";
+
+    public static final String SUBTITLE_NAME = "subtitle_name";
 
     private SwipeFlingAdapterView swipeFlingAdapterView;
     private Button modelButton;
@@ -42,11 +47,10 @@ public class MainActivity extends Activity implements SwipeFlingAdapterView.onFl
         modelButton.setOnClickListener(this);
         playButton.setOnClickListener(this);
 
-        Item item = new Item(0,0,"七国对这些野蛮人", "The Seven Kingdoms have waged war");
-        adapter.addItem(item);
+        String subtitle = getIntent().getExtras().getString(SUBTITLE_NAME);
+        List<Item> items = ParseSrt.parse(getAssets(), subtitle);
 
-        item = new Item(0,0,"宣战数百年", "against these savages for centuries");
-        adapter.addItem(item);
+        adapter.setItems(items);
     }
 
     @Override
@@ -67,8 +71,6 @@ public class MainActivity extends Activity implements SwipeFlingAdapterView.onFl
 
     @Override
     public void onAdapterAboutToEmpty(int itemsInAdapter) {
-        Item item = new Item(0,0,"七国对这些野蛮人", "The Seven Kingdoms have waged war");
-        adapter.addItem(item);
     }
 
     @Override
@@ -78,7 +80,7 @@ public class MainActivity extends Activity implements SwipeFlingAdapterView.onFl
         float alpha = scrollProgressPercent > 0 ? 1 - scrollProgressPercent / 2: 1 + scrollProgressPercent/2;
         if(alpha >= 1.0) alpha = 1.0f;
         if(alpha <= 0.0) alpha = 0.0f;
-        view.setAlpha(alpha);
+        if(view != null) view.setAlpha(alpha);
     }
 
     @Override

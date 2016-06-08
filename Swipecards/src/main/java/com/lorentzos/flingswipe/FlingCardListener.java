@@ -28,9 +28,11 @@ public class FlingCardListener implements View.OnTouchListener {
     private final int objectH;
     private final int objectW;
     private final int parentWidth;
+    private final int parentHeight;
     private final FlingListener mFlingListener;
     private final Object dataObject;
     private final float halfWidth;
+    private final float halfHeight;
     private float BASE_ROTATION_DEGREES;
 
     private float aPosX;
@@ -63,8 +65,10 @@ public class FlingCardListener implements View.OnTouchListener {
         this.objectH = frame.getHeight();
         this.objectW = frame.getWidth();
         this.halfWidth = objectW / 2f;
+        this.halfHeight = objectH / 2f;
         this.dataObject = itemAtPosition;
         this.parentWidth = ((ViewGroup) frame.getParent()).getWidth();
+        this.parentHeight = ((ViewGroup) frame.getParent()).getHeight();
         this.BASE_ROTATION_DEGREES = rotation_degrees;
         this.mFlingListener = flingListener;
 
@@ -187,11 +191,11 @@ public class FlingCardListener implements View.OnTouchListener {
     }
 
     private boolean resetCardViewOnStack() {
-        if (movedBeyondLeftBorder()) {
+        if (movedBeyondLeftBorder() || movedBeyondBottomBorder()) {
             // Left Swipe
             onSelected(true, getExitPoint(-objectW), 100);
             mFlingListener.onScroll(-1.0f);
-        } else if (movedBeyondRightBorder()) {
+        } else if (movedBeyondRightBorder() || movedBeyondTopBorder()) {
             // Right Swipe
             onSelected(false, getExitPoint(parentWidth), 100);
             mFlingListener.onScroll(1.0f);
@@ -223,6 +227,14 @@ public class FlingCardListener implements View.OnTouchListener {
         return aPosX + halfWidth > rightBorder();
     }
 
+    private boolean movedBeyondTopBorder() {
+        return aPosY + halfHeight < topBorder();
+    }
+
+    private boolean movedBeyondBottomBorder() {
+        return aPosY + halfHeight > bottomBorder();
+    }
+
 
     public float leftBorder() {
         return parentWidth / 4.f;
@@ -232,6 +244,13 @@ public class FlingCardListener implements View.OnTouchListener {
         return 3 * parentWidth / 4.f;
     }
 
+    public float topBorder() {
+        return parentHeight / 4.f;
+    }
+
+    public float bottomBorder() {
+        return 3 * parentHeight / 4.f;
+    }
 
     public void onSelected(final boolean isLeft,
                            float exitY, long duration) {
