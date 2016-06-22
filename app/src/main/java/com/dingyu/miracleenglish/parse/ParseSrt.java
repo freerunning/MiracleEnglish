@@ -1,12 +1,13 @@
 package com.dingyu.miracleenglish.parse;
 
-import android.content.res.AssetManager;
-import android.util.Log;
-
 import com.dingyu.miracleenglish.data.Item;
+import com.dingyu.miracleenglish.util.ConstantsUtil;
+import com.dingyu.miracleenglish.util.LogUtil;
 
 import java.io.BufferedReader;
 import java.io.EOFException;
+import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
@@ -24,14 +25,13 @@ import java.util.regex.Pattern;
  */
 
 public class ParseSrt {
-    private static final String TAG = "ParseSrt";
-
     private static SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss,SSS");
 
-    public static List<Item> parse(AssetManager assetManager, String fileName){
-        Log.d(TAG, "fileName="+fileName);
+    public static List<Item> parse(String fileName){
+        LogUtil.d("fileName="+fileName);
         try {
-            InputStream inputStream = assetManager.open(fileName);
+            File file = new File(ConstantsUtil.STROAGE_DIR_FILE, fileName);
+            InputStream inputStream = new FileInputStream(file);
             return parse(inputStream);
         }catch (IOException e){
             e.printStackTrace();
@@ -125,11 +125,11 @@ public class ParseSrt {
         return matcher.replaceAll("\r\n\r\n");
     }
 
-    private static long parseTime(String timeStr){
+    private static int parseTime(String timeStr){
         try {
             simpleDateFormat.setTimeZone(TimeZone.getTimeZone("GMT0"));
             Date date = simpleDateFormat.parse(timeStr);
-            return date.getTime();
+            return (int)date.getTime();
         }catch (ParseException e){
             e.printStackTrace();
         }

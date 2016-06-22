@@ -11,8 +11,8 @@ public class Item extends RealmObject{
     @PrimaryKey
     private int id;
 
-    private long startTime;
-    private long endTime;
+    private int startTime;
+    private int endTime;
 
     private String chinese;
     private String english;
@@ -28,19 +28,19 @@ public class Item extends RealmObject{
         return id;
     }
 
-    public void setStartTime(long startTime) {
+    public void setStartTime(int startTime) {
         this.startTime = startTime;
     }
 
-    public long getStartTime() {
+    public int getStartTime() {
         return startTime;
     }
 
-    public void setEndTime(long endTime) {
+    public void setEndTime(int endTime) {
         this.endTime = endTime;
     }
 
-    public long getEndTime() {
+    public int getEndTime() {
         return endTime;
     }
 

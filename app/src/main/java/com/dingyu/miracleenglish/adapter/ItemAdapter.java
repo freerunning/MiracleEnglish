@@ -47,6 +47,7 @@ public class ItemAdapter extends BaseAdapter {
 
 
     public void setItems(List<Item> items){
+        this.items.clear();
         this.items.addAll(items);
         total = items.size();
         notifyDataSetChanged();
@@ -54,6 +55,14 @@ public class ItemAdapter extends BaseAdapter {
 
     public void removeItem(int position){
         this.items.remove(position);
+        notifyDataSetChanged();
+    }
+
+    public void removeItems(int start, int length){
+        while (length > 0){
+            this.items.remove(start);
+            length--;
+        }
         notifyDataSetChanged();
     }
 

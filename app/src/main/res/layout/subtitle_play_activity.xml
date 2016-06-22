@@ -30,6 +30,19 @@
             android:layout_weight="1" />
 
         <Button
+            android:id="@+id/reset_button"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:background="@drawable/button_shape"
+            android:text="重置"
+            android:textSize="@dimen/button_text_size" />
+
+        <Space
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1" />
+
+        <Button
             android:id="@+id/model_button"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"

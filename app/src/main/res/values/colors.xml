@@ -1,4 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <color name="colorPrimary">#f7f7f7</color>
+    <color name="gray">#808080</color>
+    <color name="item_click_color">#12000408</color>
 </resources>

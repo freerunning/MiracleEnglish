@@ -2,115 +2,161 @@ package com.dingyu.miracleenglish.activity;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.util.Log;
+import android.text.TextUtils;
 import android.view.View;
-import android.widget.Button;
+import android.widget.AdapterView;
+import android.widget.ArrayAdapter;
+import android.widget.ListView;
+import android.widget.ProgressBar;
 
 import com.dingyu.miracleenglish.R;
-import com.dingyu.miracleenglish.adapter.ItemAdapter;
 import com.dingyu.miracleenglish.data.Item;
+import com.dingyu.miracleenglish.data.Subtitle;
+import com.dingyu.miracleenglish.event.ConstantsEvent;
+import com.dingyu.miracleenglish.event.InitDataEvent;
 import com.dingyu.miracleenglish.parse.ParseSrt;
-import com.lorentzos.flingswipe.SwipeFlingAdapterView;
+import com.dingyu.miracleenglish.util.ConstantsUtil;
+import com.dingyu.miracleenglish.util.LogUtil;
 
+import org.greenrobot.eventbus.EventBus;
+import org.greenrobot.eventbus.Subscribe;
+import org.greenrobot.eventbus.ThreadMode;
+
+import java.util.ArrayList;
 import java.util.List;
 
-import static com.dingyu.miracleenglish.adapter.ItemAdapter.MODEL_CHINESE;
-import static com.dingyu.miracleenglish.adapter.ItemAdapter.MODEL_DOUBLE;
-import static com.dingyu.miracleenglish.adapter.ItemAdapter.MODEL_ENGLISH;
+import butterknife.BindView;
+import butterknife.ButterKnife;
+import io.realm.Realm;
+import io.realm.RealmResults;
 
+/**
+ * Created by dyu on 16-6-6.
+ */
 
-public class MainActivity extends Activity implements SwipeFlingAdapterView.onFlingListener, SwipeFlingAdapterView.OnItemClickListener, View.OnClickListener {
-    private static final String TAG = "MainActivity";
+public class MainActivity extends Activity implements AdapterView.OnItemClickListener {
 
-    public static final String SUBTITLE_NAME = "subtitle_name";
+    @BindView(R.id.list_view)
+    ListView listView;
+    @BindView(R.id.empty_view)
+    View emptyView;
+    @BindView(R.id.progress_bar)
+    ProgressBar progressBar;
 
-    private SwipeFlingAdapterView swipeFlingAdapterView;
-    private Button modelButton;
-    private Button playButton;
-
-    private ItemAdapter adapter;
+    private ArrayAdapter<String> adapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
 
-        swipeFlingAdapterView = (SwipeFlingAdapterView)findViewById(R.id.swipe_view);
-        modelButton = (Button)findViewById(R.id.model_button);
-        playButton = (Button)findViewById(R.id.play_button);
+        setContentView(R.layout.main_activity);
+        ButterKnife.bind(this);
 
-        adapter = new ItemAdapter(this);
-        swipeFlingAdapterView.setAdapter(adapter);
-        swipeFlingAdapterView.setFlingListener(this);
-        swipeFlingAdapterView.setOnItemClickListener(this);
+        listView.setEmptyView(emptyView);
+        listView.setOnItemClickListener(this);
 
-        modelButton.setOnClickListener(this);
-        playButton.setOnClickListener(this);
-
-        String subtitle = getIntent().getExtras().getString(SUBTITLE_NAME);
-        List<Item> items = ParseSrt.parse(getAssets(), subtitle);
-
-        adapter.setItems(items);
+        EventBus.getDefault().register(this);
+        initData();
     }
 
-    @Override
-    public void removeFirstObjectInAdapter() {
-        Log.d(TAG, "remove object");
-        adapter.removeItem(0);
+    private void initData() {
+        listView.setVisibility(View.GONE);
+        emptyView.setVisibility(View.GONE);
+        progressBar.setVisibility(View.VISIBLE);
+
+        EventBus.getDefault().post(ConstantsEvent.START_INIT_DATA);
     }
 
-    @Override
-    public void onLeftCardExit(Object dataObject) {
+    @Subscribe(threadMode = ThreadMode.ASYNC)
+    public void onEvent(String event) {
+        if (TextUtils.equals(event, ConstantsEvent.START_INIT_DATA)) {
+            LogUtil.v("event=" + event);
 
-    }
+            List<String> subtitleFileName = new ArrayList<String>();
 
-    @Override
-    public void onRightCardExit(Object dataObject) {
+            Realm realm = Realm.getDefaultInstance();
+            RealmResults<Subtitle> subtitles = realm.where(Subtitle.class).findAll();
+            for (Subtitle subtitle : subtitles) {
+                LogUtil.v("readlm title=" + subtitle.getTitle());
+                subtitleFileName.add(subtitle.getTitle());
+            }
 
-    }
-
-    @Override
-    public void onAdapterAboutToEmpty(int itemsInAdapter) {
-    }
-
-    @Override
-    public void onScroll(float scrollProgressPercent) {
-        Log.v(TAG, "scrollProgressPercent="+scrollProgressPercent);
-        View view = swipeFlingAdapterView.getSelectedView();
-        float alpha = scrollProgressPercent > 0 ? 1 - scrollProgressPercent / 2: 1 + scrollProgressPercent/2;
-        if(alpha >= 1.0) alpha = 1.0f;
-        if(alpha <= 0.0) alpha = 0.0f;
-        if(view != null) view.setAlpha(alpha);
-    }
-
-    @Override
-    public void onItemClicked(int itemPosition, Object dataObject) {
-
-    }
-
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()){
-            case R.id.model_button:
-                int model = adapter.getModel();
-                if(model == MODEL_CHINESE){
-                    model = MODEL_ENGLISH;
-                    modelButton.setText("英");
-                }else if(model == MODEL_ENGLISH){
-                    model = MODEL_DOUBLE;
-                    modelButton.setText("中英");
-                }else if(model == MODEL_DOUBLE){
-                    model = MODEL_CHINESE;
-                    modelButton.setText("中");
+            List<String> sdcardSubtitleFileName = getSdcardSubtitles();
+            for (final String fileName : sdcardSubtitleFileName) {
+                if (subtitleFileName.contains(fileName)) {
+                    continue;
                 }
-                adapter.setModel(swipeFlingAdapterView, model);
-                break;
 
-            case R.id.play_button:
-                break;
+                subtitleFileName.add(fileName);
+                LogUtil.v("sdcard title=" + fileName);
 
-            default:
-                break;
+                realm.executeTransaction(new Realm.Transaction() {
+                    @Override
+                    public void execute(Realm realm) {
+                        try {
+                            Subtitle subtitle = realm.createObject(Subtitle.class);
+                            subtitle.setTitle(fileName);
+                            subtitle.setCurrentItemIndex(0);
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                        }
+                    }
+                });
+            }
+
+            EventBus.getDefault().post(new InitDataEvent(subtitleFileName));
         }
+    }
+
+    @Subscribe(threadMode = ThreadMode.MAIN)
+    public void onEvent(InitDataEvent event) {
+        LogUtil.v("event=" + event.toString());
+
+        listView.setVisibility(View.VISIBLE);
+        emptyView.setVisibility(View.VISIBLE);
+        progressBar.setVisibility(View.GONE);
+
+        adapter = new ArrayAdapter<String>(this, android.R.layout.simple_list_item_1, event.getSubtitleFileName());
+        listView.setAdapter(adapter);
+    }
+
+    private List<String> getSdcardSubtitles() {
+        LogUtil.d(ConstantsUtil.STROAGE_DIR_FILE.getAbsolutePath());
+        return filterSubtitles(ConstantsUtil.STROAGE_DIR_FILE.list());
+    }
+
+    private List<String> filterSubtitles(String[] fileNames) {
+        List<String> subtitles = new ArrayList<String>();
+        if (fileNames != null) {
+            for (String file : fileNames) {
+                LogUtil.d(file);
+                if (file != null && file.endsWith(".srt")) {
+                    subtitles.add(file);
+                }
+            }
+        }
+        return subtitles;
+    }
+
+    @Override
+    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+        String subtitle = adapter.getItem(position);
+        ActivityUtil.startSubtitlePlayActivity(this, subtitle);
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        EventBus.getDefault().unregister(this);
     }
 }
